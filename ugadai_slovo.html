@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Угадай слово — игра</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0; min-height:100vh; display:flex; justify-content:center; align-items:center;
+  font-family:Arial,Helvetica,sans-serif; color:#f5f5f7;
+  background:linear-gradient(135deg,#121218,#22222d);
+}
+.game{
+  width:min(92%,560px); background:#1a1a22; border:1px solid #33333f;
+  border-radius:22px; padding:32px; text-align:center;
+  box-shadow:0 18px 50px rgba(0,0,0,.28);
+}
+h1{margin:0 0 8px;font-size:32px}
+.subtitle{color:#a9a9b5;margin:0 0 28px}
+.category{
+  display:inline-block;background:#292936;color:#cfcfda;border-radius:20px;
+  padding:8px 15px;font-size:14px;margin-bottom:20px;
+}
+.word{
+  font-size:clamp(32px,8vw,52px); letter-spacing:10px; font-weight:bold;
+  margin:12px 0 28px; min-height:64px;
+}
+.info{display:flex;justify-content:space-around;margin-bottom:20px;color:#b7b7c2}
+input{
+  width:100%; padding:15px; border-radius:10px; border:1px solid #3b3b49;
+  background:#101015; color:white; text-align:center; font-size:20px;
+  text-transform:uppercase; outline:none;
+}
+input:focus{border-color:#858599}
+.buttons{display:flex;gap:10px;margin-top:12px}
+button{
+  flex:1; border:0; border-radius:10px; padding:14px; cursor:pointer;
+  font-size:15px; font-weight:bold; background:#f1f1f1;color:#17171c;
+}
+button.secondary{background:#30303b;color:#f1f1f1}
+button:hover{opacity:.88}
+.message{min-height:26px;margin:18px 0 0;font-weight:bold}
+.used{margin-top:15px;color:#9c9ca8;font-size:14px;min-height:20px}
+.score{margin-top:24px;padding-top:18px;border-top:1px solid #30303a;color:#c8c8d1}
+</style>
+</head>
+<body>
+<div class="game">
+  <h1>🎮 Угадай слово</h1>
+  <p class="subtitle">Вводи буквы и попробуй открыть всё слово!</p>
+
+  <div class="category" id="category">Категория: —</div>
+  <div class="word" id="word"></div>
+
+  <div class="info">
+    <span>Попытки: <b id="attempts">6</b></span>
+    <span>Угадано: <b id="score">0</b></span>
+  </div>
+
+  <input id="letter" maxlength="1" placeholder="Введите букву" autocomplete="off">
+  <div class="buttons">
+    <button onclick="guess()">Проверить</button>
+    <button class="secondary" onclick="newGame()">Новое слово</button>
+  </div>
+
+  <div class="message" id="message"></div>
+  <div class="used">Использованные буквы: <span id="used">—</span></div>
+  <div class="score">🏆 Рекорд за игру: <b id="best">0</b></div>
+</div>
+
+<script>
+const words = [
+  {word:"КОСМОС", category:"Космос"},
+  {word:"ТИГР", category:"Животные"},
+  {word:"ФУТБОЛ", category:"Спорт"},
+  {word:"КОМПЬЮТЕР", category:"Технологии"},
+  {word:"РОБОТ", category:"Технологии"},
+  {word:"ПЛАНЕТА", category:"Космос"},
+  {word:"ДРАКОН", category:"Фантастика"},
+  {word:"САМОЛЁТ", category:"Транспорт"},
+  {word:"ВУЛКАН", category:"Природа"},
+  {word:"ГИТАРА", category:"Музыка"}
+];
+
+let current, guessed, attempts, score = 0, best = 0;
+
+function newGame(){
+  current = words[Math.floor(Math.random()*words.length)];
+  guessed = [];
+  attempts = 6;
+  document.getElementById("letter").disabled = false;
+  document.getElementById("message").textContent = "";
+  document.getElementById("category").textContent = "Категория: " + current.category;
+  update();
+  document.getElementById("letter").focus();
+}
+
+function update(){
+  const shown = [...current.word].map(l => guessed.includes(l) ? l : "_").join(" ");
+  document.getElementById("word").textContent = shown;
+  document.getElementById("attempts").textContent = attempts;
+  document.getElementById("score").textContent = score;
+  document.getElementById("best").textContent = best;
+  document.getElementById("used").textContent = guessed.length ? guessed.join(", ") : "—";
+}
+
+function guess(){
+  const input = document.getElementById("letter");
+  const letter = input.value.trim().toUpperCase();
+  input.value = "";
+
+  if(!letter || !/[А-ЯЁ]/.test(letter)){
+    document.getElementById("message").textContent = "Введите одну русскую букву!";
+    return;
+  }
+  if(guessed.includes(letter)){
+    document.getElementById("message").textContent = "Эта буква уже была!";
+    return;
+  }
+
+  guessed.push(letter);
+  if(current.word.includes(letter)){
+    document.getElementById("message").textContent = "✓ Правильно!";
+  } else {
+    attempts--;
+    document.getElementById("message").textContent = "✕ Такой буквы нет.";
+  }
+
+  const won = [...current.word].every(l => guessed.includes(l));
+  if(won){
+    score++;
+    best = Math.max(best, score);
+    document.getElementById("message").textContent = "🎉 Ты угадал слово: " + current.word + "!";
+    input.disabled = true;
+  } else if(attempts <= 0){
+    score = 0;
+    document.getElementById("message").textContent = "Игра окончена! Слово было: " + current.word;
+    input.disabled = true;
+  }
+  update();
+}
+
+document.getElementById("letter").addEventListener("keydown", e => {
+  if(e.key === "Enter") guess();
+});
+
+newGame();
+</script>
+</body>
+</html>
